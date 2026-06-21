@@ -1,184 +1,220 @@
-<div class="app-container">
+<div class="app-container" [class.selection-active]="selectionMode">
   <div class="bg-glow"></div>
 
-  <header class="top-bar">
-    <div class="brand">
-      <div class="brand-icon">
-        <mat-icon>explore</mat-icon>
-      </div>
-      <span class="brand-name">RouteWise</span>
-    </div>
-    <button class="city-btn" (click)="showCities = !showCities">
-      <mat-icon>location_on</mat-icon>
-      <span>{{ form.value.city }}</span>
-      <mat-icon>expand_more</mat-icon>
-    </button>
-    <div class="city-dropdown" *ngIf="showCities" (click)="$event.stopPropagation()">
-      <input class="city-search" placeholder="Search city..." (input)="filterCities($any($event).target.value)" [value]="form.value.city" />
-      <div class="city-list">
-        <button class="city-option" *ngFor="let c of filteredCities" (click)="selectCity(c)">
-          <mat-icon>location_city</mat-icon>
-          <span>{{ c }}</span>
-          <mat-icon class="check" *ngIf="form.value.city === c">check</mat-icon>
+  <div class="split-layout">
+    <!-- Left: Content -->
+    <div class="content-side">
+      <header class="top-bar">
+        <div class="brand">
+          <div class="brand-icon">
+            <mat-icon>explore</mat-icon>
+          </div>
+          <span class="brand-name">RouteWise</span>
+        </div>
+        <button class="city-btn" (click)="showCities = !showCities">
+          <mat-icon>location_on</mat-icon>
+          <span>{{ form.value.city }}</span>
+          <mat-icon>expand_more</mat-icon>
         </button>
-      </div>
-    </div>
-  </header>
-
-  <div class="hero">
-    <div class="hero-bg">
-      <div class="hero-circle"></div>
-      <div class="hero-circle-2"></div>
-    </div>
-    <div class="hero-content">
-      <div class="hero-title" *ngIf="!routes.length && !form.value.source">
-        <h1>Where to?</h1>
-        <p>Find the smartest way across the city</p>
-      </div>
-
-      <form class="search-card" [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="loc-group">
-          <div class="loc-row">
-            <span class="loc-dot pickup"></span>
-            <div class="loc-field">
-              <label>Pickup</label>
-              <input formControlName="source" placeholder="Enter pickup location" />
-            </div>
-          </div>
-          <div class="loc-divider"></div>
-          <div class="loc-row">
-            <span class="loc-dot drop"></span>
-            <div class="loc-field">
-              <label>Drop</label>
-              <input formControlName="destination" placeholder="Enter destination" />
-            </div>
+        <div class="city-dropdown" *ngIf="showCities" (click)="$event.stopPropagation()">
+          <input class="city-search" placeholder="Search city..." (input)="filterCities($any($event).target.value)" [value]="form.value.city" />
+          <div class="city-list">
+            <button class="city-option" *ngFor="let c of filteredCities" (click)="selectCity(c)">
+              <mat-icon>location_city</mat-icon>
+              <span>{{ c }}</span>
+              <mat-icon class="check" *ngIf="form.value.city === c">check</mat-icon>
+            </button>
           </div>
         </div>
+      </header>
 
-        <div class="filter-row">
-          <div class="filter-group">
-            <label>Preference</label>
-            <div class="toggle-group">
-              <button type="button" class="toggle-btn" [class.active]="form.value.preference === 'cheapest'" (click)="form.patchValue({preference: 'cheapest'})">
-                <mat-icon>payments</mat-icon>
-                Cheapest
-              </button>
-              <button type="button" class="toggle-btn" [class.active]="form.value.preference === 'comfortable'" (click)="form.patchValue({preference: 'comfortable'})">
-                <mat-icon>airline_seat_recline_normal</mat-icon>
-                Comfort
-              </button>
-            </div>
-          </div>
-          <div class="filter-group">
-            <label>Transfers</label>
-            <div class="toggle-group">
-              <button type="button" class="toggle-btn" [class.active]="form.value.commute_type === 'single'" (click)="form.patchValue({commute_type: 'single'})">
-                <mat-icon>directions_car</mat-icon>
-                Direct
-              </button>
-              <button type="button" class="toggle-btn" [class.active]="form.value.commute_type === 'multi'" (click)="form.patchValue({commute_type: 'multi'})">
-                <mat-icon>transfer_within_a_station</mat-icon>
-                Multi
-              </button>
-            </div>
-          </div>
+      <div class="hero">
+        <div class="hero-bg">
+          <div class="hero-circle"></div>
+          <div class="hero-circle-2"></div>
         </div>
-
-        <button class="search-btn" type="submit" [disabled]="form.invalid || loading">
-          <div class="btn-content" *ngIf="!loading">
-            <mat-icon>search</mat-icon>
-            <span>Find Routes</span>
+        <div class="hero-content">
+          <div class="hero-title" *ngIf="!routes.length && !form.value.source">
+            <h1>Where to?</h1>
+            <p>Find the smartest way across the city</p>
           </div>
-          <div class="btn-loading" *ngIf="loading">
-            <span class="spinner"></span>
-            <span>Finding routes...</span>
-          </div>
-        </button>
-      </form>
-    </div>
-  </div>
 
-  <div class="results-section" *ngIf="routes.length">
-    <div class="results-header">
-      <button class="icon-btn" (click)="resetSearch()">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      <div class="results-meta">
-        <span class="results-count">{{ routes.length }} route{{ routes.length > 1 ? 's' : '' }} found</span>
-        <span class="results-type" *ngIf="form.value.preference === 'cheapest'">Sorted by price</span>
-        <span class="results-type" *ngIf="form.value.preference === 'comfortable'">Sorted by comfort</span>
-      </div>
-    </div>
-
-    <div class="routes-list">
-      <div class="route-card" *ngFor="let route of routes; trackBy: trackById"
-        [class.recommended]="route.recommended"
-        [class.selected]="selectedRoute?.route_id === route.route_id"
-        (click)="selectRoute(route)">
-        <div class="card-glow" *ngIf="route.recommended"></div>
-        <div class="card-badge" *ngIf="route.recommended">
-          <mat-icon>auto_awesome</mat-icon>
-          AI Recommended
-        </div>
-
-        <div class="card-top">
-          <div class="segments-bar">
-            <div class="segment-chip" *ngFor="let seg of route.segments; let i = index">
-              <div class="chip-icon" [style.background]="getColor(seg) + '18'" [style.color]="getColor(seg)">
-                <mat-icon>{{ getIcon(seg) }}</mat-icon>
+          <form class="search-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+            <!-- Pickup -->
+            <div class="loc-group">
+              <div class="loc-row">
+                <span class="loc-dot pickup"></span>
+                <div class="loc-field">
+                  <label>
+                    <span>Pickup</span>
+                    <span class="geo-badge" *ngIf="geoLoading">Detecting...</span>
+                  </label>
+                  <input formControlName="source" placeholder="Enter pickup location" (input)="onSourceInput()" />
+                </div>
+                <button type="button" class="map-pin-btn" (click)="onSelectOnMap('pickup')" title="Choose on map">
+                  <mat-icon>my_location</mat-icon>
+                </button>
               </div>
-              <span>{{ seg }}</span>
-              <mat-icon class="chevron" *ngIf="i < route.segments.length - 1">chevron_right</mat-icon>
+              <div class="loc-divider"></div>
+              <!-- Destination with autocomplete -->
+              <div class="loc-row dest-row">
+                <span class="loc-dot drop"></span>
+                <div class="loc-field">
+                  <label>Drop</label>
+                  <input
+                    formControlName="destination"
+                    placeholder="Enter destination"
+                    autocomplete="off"
+                    (keydown)="onSuggestionKeydown($event)"
+                    (focus)="showSuggestions && suggestions.length > 0 ? (showSuggestions = true) : null"
+                  />
+                </div>
+                <button type="button" class="map-pin-btn" (click)="onSelectOnMap('destination')" title="Choose on map">
+                  <mat-icon>add_location</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Autocomplete Suggestions -->
+            <div class="suggestions-panel" *ngIf="showSuggestions && suggestions.length > 0">
+              <button
+                type="button"
+                class="suggestion-row"
+                *ngFor="let s of suggestions; let i = index"
+                [class.highlighted]="i === suggestionIndex"
+                (click)="selectSuggestion(s)"
+              >
+                <div class="suggestion-icon"><mat-icon>location_on</mat-icon></div>
+                <div class="suggestion-text">
+                  <span class="suggestion-main">{{ s.display }}</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Geo error -->
+            <div class="geo-error" *ngIf="geoError">{{ geoError }}</div>
+
+            <div class="filter-row">
+              <div class="filter-group">
+                <label>Preference</label>
+                <div class="toggle-group">
+                  <button type="button" class="toggle-btn" [class.active]="form.value.preference === 'cheapest'" (click)="form.patchValue({preference: 'cheapest'})">
+                    <mat-icon>payments</mat-icon> Cheapest
+                  </button>
+                  <button type="button" class="toggle-btn" [class.active]="form.value.preference === 'comfortable'" (click)="form.patchValue({preference: 'comfortable'})">
+                    <mat-icon>airline_seat_recline_normal</mat-icon> Comfort
+                  </button>
+                </div>
+              </div>
+              <div class="filter-group">
+                <label>Transfers</label>
+                <div class="toggle-group">
+                  <button type="button" class="toggle-btn" [class.active]="form.value.commute_type === 'single'" (click)="form.patchValue({commute_type: 'single'})">
+                    <mat-icon>directions_car</mat-icon> Direct
+                  </button>
+                  <button type="button" class="toggle-btn" [class.active]="form.value.commute_type === 'multi'" (click)="form.patchValue({commute_type: 'multi'})">
+                    <mat-icon>transfer_within_a_station</mat-icon> Multi
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button class="search-btn" type="submit" [disabled]="form.invalid || loading">
+              <div class="btn-content" *ngIf="!loading">
+                <mat-icon>search</mat-icon>
+                <span>Find Routes</span>
+              </div>
+              <div class="btn-loading" *ngIf="loading">
+                <span class="spinner"></span>
+                <span>Finding routes...</span>
+              </div>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="results-section" *ngIf="routes.length">
+        <div class="results-header">
+          <button class="icon-btn" (click)="resetSearch()">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <div class="results-meta">
+            <span class="results-count">{{ routes.length }} route{{ routes.length > 1 ? 's' : '' }} found</span>
+            <span class="results-type" *ngIf="form.value.preference === 'cheapest'">Sorted by price</span>
+            <span class="results-type" *ngIf="form.value.preference === 'comfortable'">Sorted by comfort</span>
+          </div>
+        </div>
+
+        <div class="routes-list">
+          <div class="route-card" *ngFor="let route of routes; trackBy: trackById"
+            [class.recommended]="route.recommended"
+            [class.selected]="selectedRoute?.route_id === route.route_id"
+            (click)="selectRoute(route)">
+            <div class="card-glow" *ngIf="route.recommended"></div>
+            <div class="card-badge" *ngIf="route.recommended">
+              <mat-icon>auto_awesome</mat-icon> AI Recommended
+            </div>
+            <div class="card-top">
+              <div class="segments-bar">
+                <div class="segment-chip" *ngFor="let seg of route.segments; let i = index">
+                  <div class="chip-icon" [style.background]="getColor(seg) + '18'" [style.color]="getColor(seg)">
+                    <mat-icon>{{ getIcon(seg) }}</mat-icon>
+                  </div>
+                  <span>{{ seg }}</span>
+                  <mat-icon class="chevron" *ngIf="i < route.segments.length - 1">chevron_right</mat-icon>
+                </div>
+              </div>
+              <div class="card-price">&#8377;{{ route.total_price }}</div>
+            </div>
+            <div class="card-stats">
+              <div class="stat"><mat-icon>schedule</mat-icon><span>{{ route.total_duration }} min</span></div>
+              <div class="stat"><mat-icon>star</mat-icon><span>{{ route.comfort_score }}/10</span></div>
+              <div class="stat" *ngIf="route.segments.length > 1">
+                <mat-icon>sync_alt</mat-icon><span>{{ route.segments.length - 1 }} transfer{{ route.segments.length > 2 ? 's' : '' }}</span>
+              </div>
+            </div>
+            <div class="ai-insight" *ngIf="route.recommended && route.ai_reason">
+              <mat-icon>psychology</mat-icon><span>{{ route.ai_reason }}</span>
             </div>
           </div>
-          <div class="card-price">&#8377;{{ route.total_price }}</div>
         </div>
 
-        <div class="card-stats">
-          <div class="stat">
-            <mat-icon>schedule</mat-icon>
-            <span>{{ route.total_duration }} min</span>
-          </div>
-          <div class="stat">
-            <mat-icon>star</mat-icon>
-            <span>{{ route.comfort_score }}/10</span>
-          </div>
-          <div class="stat" *ngIf="route.segments.length > 1">
-            <mat-icon>sync_alt</mat-icon>
-            <span>{{ route.segments.length - 1 }} transfer{{ route.segments.length > 2 ? 's' : '' }}</span>
+        <div class="confirm-section" *ngIf="selectedRoute && !selectedMessage">
+          <div class="confirm-card">
+            <div class="confirm-info">
+              <div class="confirm-icon" [style.background]="getColor(selectedRoute.segments[0]) + '18'" [style.color]="getColor(selectedRoute.segments[0])">
+                <mat-icon>{{ getIcon(selectedRoute.segments[0]) }}</mat-icon>
+              </div>
+              <div class="confirm-details">
+                <span class="confirm-route">{{ selectedRoute.segments.join(' → ') }}</span>
+                <span class="confirm-price">&#8377;{{ selectedRoute.total_price }} &bull; {{ selectedRoute.total_duration }} min</span>
+              </div>
+            </div>
+            <button class="confirm-btn" (click)="confirmRoute()">Confirm Route</button>
           </div>
         </div>
 
-        <div class="ai-insight" *ngIf="route.recommended && route.ai_reason">
-          <mat-icon>psychology</mat-icon>
-          <span>{{ route.ai_reason }}</span>
+        <div class="success-message" *ngIf="selectedMessage">
+          <mat-icon>check_circle</mat-icon><span>{{ selectedMessage }}</span>
         </div>
+      </div>
+
+      <div class="error-toast" *ngIf="error">
+        <mat-icon>error_outline</mat-icon><span>{{ error }}</span>
       </div>
     </div>
 
-    <div class="confirm-section" *ngIf="selectedRoute && !selectedMessage">
-      <div class="confirm-card">
-        <div class="confirm-info">
-          <div class="confirm-icon" [style.background]="getColor(selectedRoute.segments[0]) + '18'" [style.color]="getColor(selectedRoute.segments[0])">
-            <mat-icon>{{ getIcon(selectedRoute.segments[0]) }}</mat-icon>
-          </div>
-          <div class="confirm-details">
-            <span class="confirm-route">{{ selectedRoute.segments.join(' → ') }}</span>
-            <span class="confirm-price">&#8377;{{ selectedRoute.total_price }} &bull; {{ selectedRoute.total_duration }} min</span>
-          </div>
-        </div>
-        <button class="confirm-btn" (click)="confirmRoute()">Confirm Route</button>
-      </div>
+    <!-- Right: Map -->
+    <div class="map-layer">
+      <app-map
+        [pickup]="pickupCoords"
+        [destination]="destCoords"
+        [selectionMode]="selectionMode"
+        (locationSelected)="onMapLocationSelected($event)"
+      />
+      <button class="cancel-select-btn" *ngIf="selectionMode" (click)="cancelSelectionMode()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
-
-    <div class="success-message" *ngIf="selectedMessage">
-      <mat-icon>check_circle</mat-icon>
-      <span>{{ selectedMessage }}</span>
-    </div>
-  </div>
-
-  <div class="error-toast" *ngIf="error">
-    <mat-icon>error_outline</mat-icon>
-    <span>{{ error }}</span>
   </div>
 </div>
