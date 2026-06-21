@@ -10,11 +10,20 @@ export class TravelService {
 
   constructor(private http: HttpClient) {}
 
-  search(source: string, destination: string, preference: string): Observable<TravelSearchResponse> {
-    return this.http.post<TravelSearchResponse>(`${this.apiUrl}/api/travel/search/`, {
-      source,
-      destination,
-      preference,
-    });
+  search(
+    source: string,
+    destination: string,
+    preference: string,
+    commuteType: string
+  ): Observable<TravelSearchResponse> {
+    return this.http.post<TravelSearchResponse>(
+      `${this.apiUrl}/api/travel/search/`,
+      {
+        source,
+        destination,
+        preference,
+        commute_type: commuteType,
+      }
+    );
   }
 }

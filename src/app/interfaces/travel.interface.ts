@@ -1,15 +1,13 @@
-export interface TransportOption {
-  id: number;
-  transport_type: string;
-  provider: string;
-  estimated_duration: string;
-  distance: string;
-  estimated_price: number;
+export interface RecommendedRoute {
+  route_id: number;
+  segments: string[];
+  total_price: number;
+  total_duration: number;
   comfort_score: number;
   recommended: boolean;
   ai_reason: string;
 }
 
 export interface TravelSearchResponse {
-  results: TransportOption[];
+  recommended_routes: RecommendedRoute[];
 }
