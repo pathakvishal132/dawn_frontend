@@ -1,14 +1,65 @@
 :host {
   display: block;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   font-family: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
 }
 
 .app-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
+}
+
+.split-layout {
+  display: flex;
+  height: 100%;
+}
+
+/* ─── Content Side ─── */
+.content-side {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+/* ─── Map Layer ─── */
+.map-layer {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.cancel-select-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1100;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.cancel-select-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.cancel-select-btn mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
 }
 
 .bg-glow {
@@ -168,7 +219,7 @@
   position: relative;
   z-index: 1;
   padding: 20px 24px 32px;
-  max-width: 560px;
+  max-width: 520px;
   margin: 0 auto;
 }
 
@@ -310,6 +361,119 @@
   color: rgba(255, 255, 255, 0.2);
 }
 
+.map-pin-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: 0.15s;
+  border-radius: 8px;
+}
+
+.map-pin-btn:hover {
+  color: #818cf8;
+  background: rgba(129, 140, 248, 0.08);
+}
+
+.map-pin-btn mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.geo-badge {
+  font-size: 0.65rem;
+  color: #818cf8;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.geo-error {
+  font-size: 0.78rem;
+  color: #f87171;
+  text-align: center;
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, 0.06);
+  border-radius: 10px;
+  border: 1px solid rgba(248, 113, 113, 0.1);
+}
+
+/* ─── Autocomplete Suggestions ─── */
+.suggestions-panel {
+  margin-top: -8px;
+  background: #1e1e32;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  animation: dropIn 0.12s ease;
+}
+
+.suggestion-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.1s;
+}
+
+.suggestion-row:hover,
+.suggestion-row.highlighted {
+  background: rgba(129, 140, 248, 0.06);
+}
+
+.suggestion-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.suggestion-icon mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #818cf8;
+}
+
+.suggestion-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestion-main {
+  display: block;
+  font-size: 0.9rem;
+  color: #fff;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ─── Filter Row ─── */
 .filter-row {
   display: flex;
@@ -434,7 +598,7 @@
   position: relative;
   z-index: 1;
   padding: 0 24px 24px;
-  max-width: 560px;
+  max-width: 520px;
   margin: 0 auto;
   animation: fadeUp 0.35s ease;
 }
@@ -819,6 +983,27 @@
 }
 
 /* ─── Responsive ─── */
+@media (max-width: 900px) {
+  .split-layout {
+    flex-direction: column-reverse;
+  }
+
+  .map-layer {
+    height: 35vh;
+    flex: none;
+  }
+
+  .content-side {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .results-section,
+  .hero {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 600px) {
   .top-bar {
     padding: 12px 16px;
