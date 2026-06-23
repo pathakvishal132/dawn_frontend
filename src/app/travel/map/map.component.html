@@ -1,13 +1,35 @@
 <div #mapContainer class="map-inner"></div>
 
-<div class="crosshair-overlay" *ngIf="selectionMode">
-  <div class="crosshair-v"></div>
-  <div class="crosshair-h"></div>
-  <div class="crosshair-dot"></div>
-  <div class="crosshair-label">
-    Move the map to set {{ selectionMode === 'pickup' ? 'pickup' : 'destination' }}
+<div class="selection-ui" *ngIf="selectionMode">
+  <!-- Dim overlay -->
+  <div class="sel-backdrop"></div>
+
+  <!-- Animated targeting rings -->
+  <div class="sel-rings">
+    <div class="sel-ring ring-1"></div>
+    <div class="sel-ring ring-2"></div>
+    <div class="sel-ring ring-3"></div>
   </div>
-  <button class="confirm-btn" (click)="onConfirmSelection()">
-    Confirm {{ selectionMode === 'pickup' ? 'Pickup' : 'Destination' }}
-  </button>
+
+  <!-- Crosshair -->
+  <div class="sel-cross-v"></div>
+  <div class="sel-cross-h"></div>
+  <div class="sel-center-dot"></div>
+
+  <!-- Top label bar -->
+  <div class="sel-top-bar">
+    <div class="sel-mode-badge">
+      <span class="sel-mode-icon"></span>
+      <span>Set {{ selectionMode === 'pickup' ? 'pickup' : 'drop-off' }} location</span>
+    </div>
+  </div>
+
+  <!-- Bottom confirm area -->
+  <div class="sel-bottom">
+    <button class="sel-confirm-btn" (click)="onConfirmSelection()">
+      <span class="sel-btn-dot"></span>
+      Confirm {{ selectionMode === 'pickup' ? 'Pickup' : 'Destination' }}
+    </button>
+    <p class="sel-hint">Pan the map to position the pin, then confirm</p>
+  </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -12,7 +12,8 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
 import { TravelService } from '../services/travel.service';
 import { RecommendedRoute } from '../interfaces/travel.interface';
-import { GeoService, Suggestion } from './services/geo.service';
+import { Suggestion } from '../interfaces/geo.interface';
+import { GeoService } from '../services/geo.service';
 import { MapComponent } from './map/map.component';
 
 const CITIES = [
@@ -39,7 +40,11 @@ const TRANSPORT_COLORS: Record<string, string> = {
   styleUrls: ['./travel.component.css'],
 })
 export class TravelComponent implements OnInit, OnDestroy {
+  @ViewChild('srcInput') srcInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('dstInput') dstInput!: ElementRef<HTMLInputElement>;
+
   form: FormGroup;
+  viewState: 'home' | 'search' | 'results' = 'home';
   routes: RecommendedRoute[] = [];
   loading = false;
   error = '';
@@ -51,12 +56,21 @@ export class TravelComponent implements OnInit, OnDestroy {
   pickupCoords: { lat: number; lng: number } | null = null;
   destCoords: { lat: number; lng: number } | null = null;
   selectionMode: 'pickup' | 'destination' | null = null;
+
   suggestions: Suggestion[] = [];
   showSuggestions = false;
   suggestionIndex = -1;
+  sugTarget: 'source' | 'destination' = 'destination';
+
   geoLoading = false;
   geoError = '';
+  srcSearching = false;
+  dstSearching = false;
+  srcNoResults = false;
+  dstNoResults = false;
 
+  private lastSrcQuery = '';
+  private lastDstQuery = '';
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -76,9 +90,13 @@ export class TravelComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.detectLocation();
 
+    this.form.get('source')?.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(val => this.onFieldInput('source', val));
+
     this.form.get('destination')?.valueChanges
-      .pipe(debounceTime(250), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(val => this.onDestInput(val));
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(val => this.onFieldInput('destination', val));
   }
 
   ngOnDestroy() {
@@ -86,14 +104,63 @@ export class TravelComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private detectLocation() {
+  get pickupDisplay(): string {
+    const v = this.form.value.source;
+    if (v) return v;
+    if (this.geoLoading) return 'Detecting location...';
+    return 'Add pickup';
+  }
+
+  get destDisplay(): string {
+    return this.form.value.destination || 'Where to?';
+  }
+
+  /* ─── View state ─── */
+
+  openSearch(field: 'source' | 'destination') {
+    this.viewState = 'search';
+    this.sugTarget = field;
+    setTimeout(() => {
+      if (field === 'source') this.srcInput?.nativeElement?.focus();
+      else this.dstInput?.nativeElement?.focus();
+    }, 200);
+  }
+
+  goHome() {
+    this.viewState = 'home';
+    this.closeSuggestions();
+    this.cancelSelectionMode();
+  }
+
+  closeSearchOverlay(event: MouseEvent) {
+    if ((event.target as HTMLElement).classList.contains('search-overlay')) {
+      this.goHome();
+    }
+  }
+
+  focusField(field: 'source' | 'destination') {
+    this.sugTarget = field;
+    setTimeout(() => {
+      if (field === 'source') this.srcInput?.nativeElement?.focus();
+      else this.dstInput?.nativeElement?.focus();
+    }, 50);
+  }
+
+  /* ─── Geolocation ─── */
+
+  private detectLocation(attempt = 1) {
     this.geoLoading = true;
-    this.geoService.getCurrentPosition().pipe(takeUntil(this.destroy$)).subscribe({
+    const timeout = attempt === 1 ? 10000 : attempt === 2 ? 20000 : 30000;
+    this.geoService.getCurrentPosition(timeout).pipe(takeUntil(this.destroy$)).subscribe({
       next: pos => {
-        this.pickupCoords = pos;
+        if (pos.accuracy > 300 && attempt < 3) {
+          this.detectLocation(attempt + 1);
+          return;
+        }
+        this.pickupCoords = { lat: pos.lat, lng: pos.lng };
         this.geoService.reverseGeocode(pos.lat, pos.lng).pipe(takeUntil(this.destroy$)).subscribe({
           next: addr => {
-            this.form.patchValue({ source: addr }, { emitEvent: false });
+            this.form.patchValue({ source: addr.address }, { emitEvent: false });
             this.geoLoading = false;
           },
           error: () => {
@@ -103,20 +170,17 @@ export class TravelComponent implements OnInit, OnDestroy {
         });
       },
       error: err => {
-        this.geoError = err + ' — set pickup manually';
+        if (attempt < 3) {
+          this.detectLocation(attempt + 1);
+          return;
+        }
+        this.geoError = err;
         const fallback = this.geoService.getDefaultLocation();
         this.pickupCoords = { lat: fallback.lat, lng: fallback.lng };
         this.form.patchValue({ source: fallback.address }, { emitEvent: false });
         this.geoLoading = false;
       },
     });
-  }
-
-  filterCities(val: string) {
-    this.form.patchValue({ city: val });
-    this.filteredCities = CITIES.filter(c =>
-      c.toLowerCase().includes((val || '').toLowerCase()),
-    );
   }
 
   getIcon(type: string): string {
@@ -136,11 +200,19 @@ export class TravelComponent implements OnInit, OnDestroy {
     this.showCities = false;
   }
 
+  filterCities(val: string) {
+    this.form.patchValue({ city: val });
+    this.filteredCities = CITIES.filter(c =>
+      c.toLowerCase().includes((val || '').toLowerCase()),
+    );
+  }
+
   resetSearch() {
     this.routes = [];
     this.selectedRoute = null;
     this.selectedMessage = '';
     this.error = '';
+    this.viewState = 'home';
   }
 
   onSubmit() {
@@ -156,6 +228,7 @@ export class TravelComponent implements OnInit, OnDestroy {
       next: res => {
         this.routes = res.recommended_routes;
         this.loading = false;
+        this.viewState = 'results';
       },
       error: () => {
         this.error = 'Failed to fetch routes. Please try again.';
@@ -175,63 +248,89 @@ export class TravelComponent implements OnInit, OnDestroy {
     }
   }
 
-  /* ─── Map / Location helpers ─── */
+  /* ─── Autocomplete ─── */
 
-  onSelectOnMap(type: 'pickup' | 'destination') {
-    this.selectionMode = type;
-    this.showSuggestions = false;
-  }
-
-  onMapLocationSelected(point: { lat: number; lng: number }) {
-    this.geoService.reverseGeocode(point.lat, point.lng).pipe(takeUntil(this.destroy$)).subscribe({
-      next: addr => {
-        if (this.selectionMode === 'pickup') {
-          this.pickupCoords = point;
-          this.form.patchValue({ source: addr });
-        } else {
-          this.destCoords = point;
-          this.form.patchValue({ destination: addr });
-          this.showSuggestions = false;
-        }
-        this.selectionMode = null;
-      },
-      error: () => {
-        const fallback = `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}`;
-        if (this.selectionMode === 'pickup') {
-          this.pickupCoords = point;
-          this.form.patchValue({ source: fallback });
-        } else {
-          this.destCoords = point;
-          this.form.patchValue({ destination: fallback });
-        }
-        this.selectionMode = null;
-      },
-    });
-  }
-
-  cancelSelectionMode() {
-    this.selectionMode = null;
-  }
-
-  private onDestInput(val: string) {
+  private onFieldInput(field: 'source' | 'destination', value: string) {
     if (this.selectionMode) return;
-    if (!val || val.trim().length < 2) {
-      this.suggestions = [];
-      this.showSuggestions = false;
+    const q = (value || '').trim();
+    if (q.length < 2) {
+      this.closeSuggestions();
+      if (field === 'source') { this.srcSearching = false; this.srcNoResults = false; }
+      else { this.dstSearching = false; this.dstNoResults = false; }
       return;
     }
-    this.geoService.autocomplete(val).pipe(takeUntil(this.destroy$)).subscribe(s => {
+
+    if (field === 'source') {
+      if (q === this.lastSrcQuery) return;
+      this.lastSrcQuery = q;
+      this.srcSearching = true;
+      this.srcNoResults = false;
+    } else {
+      if (q === this.lastDstQuery) return;
+      this.lastDstQuery = q;
+      this.dstSearching = true;
+      this.dstNoResults = false;
+    }
+
+    this.sugTarget = field;
+
+    const bias = this.pickupCoords || undefined;
+    const city = this.form.value.city;
+
+    this.geoService.autocomplete(q, bias, city).pipe(takeUntil(this.destroy$)).subscribe(s => {
       this.suggestions = s;
       this.showSuggestions = s.length > 0;
       this.suggestionIndex = -1;
+
+      if (field === 'source') {
+        this.srcSearching = false;
+        this.srcNoResults = s.length === 0;
+      } else {
+        this.dstSearching = false;
+        this.dstNoResults = s.length === 0;
+      }
     });
   }
 
+  private resolveAndSelect(s: Suggestion) {
+    if (s.placeId && !s.lat) {
+      this.geoService.getPlaceDetails(s.placeId).pipe(takeUntil(this.destroy$)).subscribe({
+        next: details => {
+          const coords = { lat: details.lat, lng: details.lng };
+          const display = details.formatted_address || details.name || s.display;
+          this.applySelection(coords, display);
+        },
+        error: () => this.applySelection(null, s.display),
+      });
+    } else {
+      const coords = s.lat ? { lat: s.lat, lng: s.lng } : null;
+      this.applySelection(coords, s.address || s.display);
+    }
+  }
+
   selectSuggestion(s: Suggestion) {
-    this.destCoords = { lat: s.lat, lng: s.lng };
-    this.form.patchValue({ destination: s.display });
+    this.resolveAndSelect(s);
+  }
+
+  private applySelection(coords: { lat: number; lng: number } | null, display: string) {
+    if (this.sugTarget === 'source') {
+      if (coords) this.pickupCoords = coords;
+      this.form.patchValue({ source: display });
+      this.lastSrcQuery = '';
+      this.srcNoResults = false;
+    } else {
+      if (coords) this.destCoords = coords;
+      this.form.patchValue({ destination: display });
+      this.lastDstQuery = '';
+      this.dstNoResults = false;
+    }
+    this.closeSuggestions();
+  }
+
+  closeSuggestions() {
     this.showSuggestions = false;
     this.suggestions = [];
+    this.suggestionIndex = -1;
   }
 
   onSuggestionKeydown(event: KeyboardEvent) {
@@ -246,11 +345,49 @@ export class TravelComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.selectSuggestion(this.suggestions[this.suggestionIndex]);
     } else if (event.key === 'Escape') {
-      this.showSuggestions = false;
+      this.closeSuggestions();
     }
   }
 
-  onSourceInput() {
-    this.showSuggestions = false;
+  getPlaceIcon(s: Suggestion): string {
+    return this.geoService.getTypeIcon(s.type);
+  }
+
+  /* ─── Map selection ─── */
+
+  onSelectOnMap(type: 'pickup' | 'destination') {
+    this.selectionMode = type;
+    this.closeSuggestions();
+  }
+
+  onMapLocationSelected(point: { lat: number; lng: number; type?: 'pickup' | 'destination' }) {
+    const mode = point.type || this.selectionMode || (!this.pickupCoords ? 'pickup' : 'destination');
+    this.geoService.reverseGeocode(point.lat, point.lng).pipe(takeUntil(this.destroy$)).subscribe({
+      next: addr => {
+        if (mode === 'pickup') {
+          this.pickupCoords = { lat: point.lat, lng: point.lng };
+          this.form.patchValue({ source: addr.address });
+        } else {
+          this.destCoords = { lat: point.lat, lng: point.lng };
+          this.form.patchValue({ destination: addr.address });
+        }
+        if (this.selectionMode) this.selectionMode = null;
+      },
+      error: () => {
+        const fallback = `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}`;
+        if (mode === 'pickup') {
+          this.pickupCoords = { lat: point.lat, lng: point.lng };
+          this.form.patchValue({ source: fallback });
+        } else {
+          this.destCoords = { lat: point.lat, lng: point.lng };
+          this.form.patchValue({ destination: fallback });
+        }
+        if (this.selectionMode) this.selectionMode = null;
+      },
+    });
+  }
+
+  cancelSelectionMode() {
+    this.selectionMode = null;
   }
 }
