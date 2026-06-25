@@ -231,3 +231,94 @@
   font-weight: 400;
   text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
+
+/* ─── Leaflet Custom Markers & Animations ─── */
+.marker-dot-pickup {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-dot-pickup .center-dot {
+  width: 10px;
+  height: 10px;
+  background: #6366f1;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.8);
+  z-index: 2;
+}
+
+.marker-dot-pickup .pulse-ring {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.25);
+  animation: markerPulse 2s infinite ease-out;
+  z-index: 1;
+}
+
+@keyframes markerPulse {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.marker-pin-dest {
+  position: relative;
+  width: 40px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.marker-pin-dest .pin-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  border: 2px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.5);
+  z-index: 2;
+}
+
+.marker-pin-dest .pin-icon i {
+  color: #ffffff;
+  font-size: 18px;
+  transform: rotate(45deg); /* Counter-rotate to keep icon upright */
+}
+
+.marker-pin-dest .pin-shadow {
+  position: absolute;
+  bottom: 0;
+  width: 12px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  filter: blur(1px);
+  z-index: 1;
+}
+
+/* Animated Route Line dash animation */
+.animated-route-line {
+  stroke-dasharray: 8, 12;
+  animation: routeLineFlow 2s linear infinite;
+}
+
+@keyframes routeLineFlow {
+  from {
+    stroke-dashoffset: 40;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+

@@ -30,7 +30,7 @@
       </button>
     </div>
     <div class="city-dropdown" *ngIf="showCities" (click)="$event.stopPropagation()">
-      <input class="city-search" placeholder="Search area..." (input)="filterCities($any($event).target.value)" [value]="form.value.city" />
+      <input #citySearchInput class="city-search" placeholder="Search area..." (input)="filterCities(citySearchInput.value)" [value]="form.value.city" />
       <div class="city-list">
         <button class="city-option" *ngFor="let c of filteredCities" (click)="selectCity(c)">
           <mat-icon>location_city</mat-icon>
