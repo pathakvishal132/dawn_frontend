@@ -11,7 +11,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
 import { TravelService } from '../services/travel.service';
-import { RecommendedRoute } from '../interfaces/travel.interface';
+import { RecommendedRoute, RouteSegment } from '../interfaces/travel.interface';
 import { Suggestion } from '../interfaces/geo.interface';
 import { GeoService } from '../services/geo.service';
 import { MapComponent } from './map/map.component';
@@ -30,6 +30,15 @@ const TRANSPORT_ICONS: Record<string, string> = {
 const TRANSPORT_COLORS: Record<string, string> = {
   Metro: '#4fc3f7', Bus: '#ffb74d', Cab: '#81c784',
   Auto: '#ce93d8', Bike: '#ef5350',
+};
+
+const CATEGORY_META: Record<string, { icon: string; color: string }> = {
+  'Cheapest':     { icon: 'payments',             color: '#34d399' },
+  'Fastest':      { icon: 'bolt',                 color: '#f87171' },
+  'Balanced':     { icon: 'balance',              color: '#60a5fa' },
+  'Premium':      { icon: 'workspace_premium',    color: '#fbbf24' },
+  'Eco-Friendly': { icon: 'eco',                  color: '#a78bfa' },
+  'Budget Comfort': { icon: 'local_offer',        color: '#f472b6' },
 };
 
 @Component({
@@ -68,6 +77,9 @@ export class TravelComponent implements OnInit, OnDestroy {
   dstSearching = false;
   srcNoResults = false;
   dstNoResults = false;
+
+  bookingSegment: RouteSegment | null = null;
+  bookingRoute: RecommendedRoute | null = null;
 
   private lastSrcQuery = '';
   private lastDstQuery = '';
@@ -113,6 +125,29 @@ export class TravelComponent implements OnInit, OnDestroy {
 
   get destDisplay(): string {
     return this.form.value.destination || 'Where to?';
+  }
+
+  getIcon(type: string): string {
+    return TRANSPORT_ICONS[type] || 'directions_car';
+  }
+
+  getColor(type: string): string {
+    return TRANSPORT_COLORS[type] || '#4fc3f7';
+  }
+
+  getCategoryMeta(cat: string): { icon: string; color: string } {
+    return CATEGORY_META[cat] || { icon: 'local_offer', color: '#818cf8' };
+  }
+
+  trackById(_: number, route: RecommendedRoute): number {
+    return route.route_id;
+  }
+
+  formatDuration(min: number): string {
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
   }
 
   /* ─── View state ─── */
@@ -183,18 +218,6 @@ export class TravelComponent implements OnInit, OnDestroy {
     });
   }
 
-  getIcon(type: string): string {
-    return TRANSPORT_ICONS[type] || 'directions_car';
-  }
-
-  getColor(type: string): string {
-    return TRANSPORT_COLORS[type] || '#4fc3f7';
-  }
-
-  trackById(_: number, route: RecommendedRoute): number {
-    return route.route_id;
-  }
-
   selectCity(city: string) {
     this.form.patchValue({ city });
     this.showCities = false;
@@ -213,7 +236,11 @@ export class TravelComponent implements OnInit, OnDestroy {
     this.selectedMessage = '';
     this.error = '';
     this.viewState = 'home';
+    this.bookingSegment = null;
+    this.bookingRoute = null;
   }
+
+  /* ─── Route Search ─── */
 
   onSubmit() {
     if (this.form.invalid) return;
@@ -222,6 +249,8 @@ export class TravelComponent implements OnInit, OnDestroy {
     this.routes = [];
     this.selectedMessage = '';
     this.selectedRoute = null;
+    this.bookingSegment = null;
+    this.bookingRoute = null;
 
     const { source, destination, preference, commute_type } = this.form.value;
     this.travelService.search(source, destination, preference, commute_type).subscribe({
@@ -244,8 +273,23 @@ export class TravelComponent implements OnInit, OnDestroy {
 
   confirmRoute() {
     if (this.selectedRoute) {
-      this.selectedMessage = `${this.selectedRoute.segments.join(' → ')} selected!`;
+      const segs = this.selectedRoute.segments;
+      const from = segs[0].source;
+      const to = segs[segs.length - 1].destination;
+      this.selectedMessage = `${this.selectedRoute.category} route selected! ${from} → ${to}`;
     }
+  }
+
+  bookSegment(seg: RouteSegment) {
+    this.bookingSegment = seg;
+    this.bookingRoute = null;
+    setTimeout(() => { this.bookingSegment = null; }, 3000);
+  }
+
+  bookRoute(route: RecommendedRoute) {
+    this.bookingRoute = route;
+    this.bookingSegment = null;
+    setTimeout(() => { this.bookingRoute = null; }, 3000);
   }
 
   /* ─── Autocomplete ─── */

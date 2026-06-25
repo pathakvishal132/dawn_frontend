@@ -732,64 +732,229 @@
   background: rgba(99,102,241,0.08);
 }
 
-.ride-main {
-  display: flex;
+/* ─── Category Badge ─── */
+.cat-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 4px;
+  padding: 3px 10px 3px 7px;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border: 1px solid;
+  margin-bottom: 10px;
 }
 
-.ride-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.04);
+.cat-badge mat-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+}
+
+/* ─── Segment List (vertical timeline) ─── */
+.seg-list {
   display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+.seg-item {
+  display: flex;
+  gap: 10px;
+}
+
+.seg-line-left {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  width: 10px;
   flex-shrink: 0;
 }
 
-.ride-icon-wrap mat-icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
+.seg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  z-index: 1;
 }
 
-.ride-info {
+.seg-connector {
+  width: 2px;
   flex: 1;
+  min-height: 20px;
+  opacity: 0.35;
+}
+
+.seg-body {
+  flex: 1;
+  padding-bottom: 12px;
   min-width: 0;
 }
 
-.ride-name {
-  display: block;
-  font-size: 0.9rem;
+.seg-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.seg-mode {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
   font-weight: 600;
+}
+
+.seg-mode mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.seg-fare {
+  font-size: 0.85rem;
+  font-weight: 700;
   color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ride-eta {
-  display: block;
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.4);
-  margin-top: 1px;
+.seg-route {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 3px;
 }
 
-.ride-price {
-  font-size: 1.15rem;
+.seg-loc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+
+.seg-arrow {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  color: rgba(255,255,255,0.25);
+}
+
+.seg-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
+}
+
+.seg-meta-row span {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.seg-meta-row mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.seg-book-btn {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.65rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.seg-book-btn:hover {
+  background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.3);
+  color: #818cf8;
+}
+
+/* ─── Route Total Row ─── */
+.route-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.route-totals {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+}
+
+.rt-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-right: 2px;
+}
+
+.rt-price {
+  font-size: 1rem;
   font-weight: 700;
   color: #fff;
-  flex-shrink: 0;
-  letter-spacing: -0.3px;
+}
+
+.rt-sep {
+  color: rgba(255,255,255,0.12);
+  font-size: 0.8rem;
+}
+
+.rt-stat {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+}
+
+.book-route-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.book-route-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+
+.book-route-btn:active {
+  transform: translateY(0);
 }
 
 .ride-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  margin-top: 8px;
+  margin-bottom: 8px;
   background: rgba(99,102,241,0.12);
   color: #818cf8;
   font-size: 0.65rem;
@@ -802,14 +967,6 @@
   font-size: 11px;
   width: 11px;
   height: 11px;
-}
-
-.ride-stats {
-  display: flex;
-  gap: 14px;
-  margin-top: 8px;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.35);
 }
 
 .ride-reason {
@@ -833,6 +990,35 @@
   color: #818cf8;
   flex-shrink: 0;
   margin-top: 1px;
+}
+
+/* ─── Booking Toast ─── */
+.rs-booking-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  font-size: 0.85rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.rs-booking-toast mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.booking-seg {
+  color: #818cf8;
+  background: rgba(99,102,241,0.08);
+}
+
+.booking-route {
+  color: #34d399;
+  background: rgba(52,211,153,0.08);
 }
 
 /* ─── Results Confirm ─── */

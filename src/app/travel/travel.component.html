@@ -158,35 +158,83 @@
         [class.recommended]="route.recommended"
         [class.selected]="selectedRoute?.route_id === route.route_id"
         (click)="selectRoute(route)">
-        <div class="ride-main">
-          <div class="ride-icon-wrap">
-            <mat-icon [style.color]="getColor(route.segments[0])">{{ getIcon(route.segments[0]) }}</mat-icon>
-          </div>
-          <div class="ride-info">
-            <span class="ride-name">{{ route.segments.join(' → ') }}</span>
-            <span class="ride-eta">{{ route.total_duration }} min</span>
-          </div>
-          <div class="ride-price">&#8377;{{ route.total_price }}</div>
-        </div>
+
+        <!-- AI badge -->
         <div class="ride-badge" *ngIf="route.recommended">
           <mat-icon>auto_awesome</mat-icon> AI pick
         </div>
-        <div class="ride-stats" *ngIf="!route.recommended">
-          <span>Comfort {{ route.comfort_score }}/10</span>
-          <span *ngIf="route.segments.length > 1">{{ route.segments.length - 1 }} transfer{{ route.segments.length > 2 ? 's' : '' }}</span>
+
+        <!-- Category badge -->
+        <div class="cat-badge" [style.color]="getCategoryMeta(route.category).color" [style.borderColor]="getCategoryMeta(route.category).color + '30'" [style.background]="getCategoryMeta(route.category).color + '12'">
+          <mat-icon [style.color]="getCategoryMeta(route.category).color">{{ getCategoryMeta(route.category).icon }}</mat-icon>
+          <span>{{ route.category }}</span>
         </div>
+
+        <!-- Segment breakdown list -->
+        <div class="seg-list">
+          <div class="seg-item" *ngFor="let seg of route.segments; let i = index; let last = last">
+            <div class="seg-line-left">
+              <div class="seg-dot" [style.background]="getColor(seg.transport_mode)"></div>
+              <div class="seg-connector" *ngIf="!last" [style.background]="getColor(seg.transport_mode)"></div>
+            </div>
+            <div class="seg-body">
+              <div class="seg-top">
+                <span class="seg-mode" [style.color]="getColor(seg.transport_mode)">
+                  <mat-icon>{{ getIcon(seg.transport_mode) }}</mat-icon>
+                  {{ seg.provider }} · {{ seg.transport_mode }}
+                </span>
+                <span class="seg-fare">&#8377;{{ seg.fare }}</span>
+              </div>
+              <div class="seg-route">
+                <span class="seg-loc">{{ seg.source }}</span>
+                <mat-icon class="seg-arrow">arrow_forward</mat-icon>
+                <span class="seg-loc">{{ seg.destination }}</span>
+              </div>
+              <div class="seg-meta-row">
+                <span><mat-icon>schedule</mat-icon> {{ formatDuration(seg.duration) }}</span>
+                <span><mat-icon>straighten</mat-icon> {{ seg.distance }} km</span>
+                <button class="seg-book-btn" (click)="bookSegment(seg); $event.stopPropagation()">Book Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Route totals + Book entire route -->
+        <div class="route-total-row">
+          <div class="route-totals">
+            <span class="rt-label">Total</span>
+            <span class="rt-price">&#8377;{{ route.total_fare }}</span>
+            <span class="rt-sep">|</span>
+            <span class="rt-stat">{{ formatDuration(route.total_duration) }}</span>
+            <span class="rt-sep">|</span>
+            <span class="rt-stat">{{ route.total_distance }} km</span>
+          </div>
+          <button class="book-route-btn" (click)="bookRoute(route); $event.stopPropagation()">Book</button>
+        </div>
+
+        <!-- AI reason -->
         <div class="ride-reason" *ngIf="route.recommended && route.ai_reason">
           <mat-icon>psychology</mat-icon> {{ route.ai_reason }}
         </div>
       </div>
     </div>
-    <div class="rs-confirm" *ngIf="selectedRoute && !selectedMessage">
+
+    <!-- Confirm / bookings -->
+    <div class="rs-confirm" *ngIf="selectedRoute && !selectedMessage && !bookingSegment && !bookingRoute">
       <button class="confirm-action" (click)="confirmRoute()">
-        Confirm {{ selectedRoute.segments[0] }} — &#8377;{{ selectedRoute.total_price }}
+        Confirm {{ selectedRoute.category }} — &#8377;{{ selectedRoute.total_fare }}
       </button>
     </div>
     <div class="rs-success" *ngIf="selectedMessage">
       <mat-icon>check_circle</mat-icon> {{ selectedMessage }}
+    </div>
+    <div class="rs-booking-toast booking-seg" *ngIf="bookingSegment && !selectedMessage">
+      <mat-icon>check_circle</mat-icon>
+      {{ bookingSegment.provider }} {{ bookingSegment.transport_mode }} booked: {{ bookingSegment.source }} → {{ bookingSegment.destination }}
+    </div>
+    <div class="rs-booking-toast booking-route" *ngIf="bookingRoute && !selectedMessage">
+      <mat-icon>check_circle</mat-icon>
+      {{ bookingRoute.category }} route booked ({{ bookingRoute.segments.length }} segment{{ bookingRoute.segments.length > 1 ? 's' : '' }})
     </div>
   </div>
 
